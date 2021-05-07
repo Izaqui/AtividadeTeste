@@ -1,0 +1,96 @@
+import React from "react";
+import { render, fireEvent } from "@testing-library/react";
+import Header from "../../components/Header";
+import FakeUser from '../../services/FakeUserService';
+
+const mockedHistoryPush = jest.fn();
+const mockedLogout = jest.fn();
+const mockedSetLoged = jest.fn();
+
+
+jest.mock("react-router-dom", () => {
+  return {
+    useHistory: () => ({
+      push: mockedHistoryPush,
+    }),
+    Link: ({ children }) => children,
+  };
+});
+
+describe("Header Component", () => {
+  beforeEach(() => {
+    mockedHistoryPush.mockClear();
+  });
+  
+  
+  //1- Teste de integração onde o botao power não renderiza se não existir usuário logado no contexto
+  it("should not be able render a logout-icon if user cannot exist", async () => {
+    jest.mock("../../hooks/AuthContext", () => {
+        return {
+          useAuth: () => ({
+            logout: mockedLogout,
+            setLogedUser: mockedSetLoged,
+            user: null
+          }),
+        };
+      });
+
+    const { getByTestId } = render(<Header scroll={20} />);
+
+    expect(getByTestId("logout-button")).not.toBeTruthy();
+  });
+
+  //2- Teste de integração que o botão power só renderiza se o usuário estiver logado no contexto
+  it("should be able render a logout-icon if user cannot exist", async () => {
+    jest.mock("../../hooks/AuthContext", () => {
+        return {
+          useAuth: () => ({
+            logout: mockedLogout,
+            setLogedUser:mockedSetLoged,
+            user: {
+              email: 'example@gmail.com',
+              password: '1234567'
+            }
+          }),
+        };
+      });
+      const { getByTestId } = render(<Header scroll={20} />);
+
+      expect(getByTestId("logout-button")).toBeTruthy();
+  });
+
+  //5- Teste de sistema, o usuário logado pode realizar loggout.
+  it("should be able the user call logout function", async () => {
+
+    jest.mock("../../hooks/AuthContext", () => {
+        return {
+          useAuth: () => ({
+            logout: mockedLogout,
+            setLogedUser:mockedSetLoged,
+            user: {
+              email: 'example@gmail.com',
+              password: '1234567'
+            }
+          }),
+        };
+      });
+      const { getByTestId } = render(<Header scroll={20} />);
+
+      const logoutButton = getByTestId("logout-button");
+
+      fireEvent.click(logoutButton);
+      
+      expect(logout).toHaveBeenCalledWith();
+  });
+
+  //5- Teste unitário, so é possível o usuário realizar loggou se estiver logado
+  it("should cannot be able the user call logout function if user is not logged", async () => {
+
+      const user = {};
+
+      const isLogged = FakeUser.logout(user);
+
+      expect(isLogged).toBe(null);
+  });
+
+});
